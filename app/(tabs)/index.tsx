@@ -10,11 +10,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "expo-router";
 
 import axios from "axios";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const App = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     // Get all categories from the WordPress REST API
@@ -23,13 +24,15 @@ const App = () => {
         const response = await axios.get(
           "https://shams-almaarif.com/wp-json/wp/v2/categories?per_page=100"
         );
-        // Just get the categories that have posts
+        // Just get the categories that have posts and is the child and not have children
         const filteredCategories = response.data.filter(
-          (category) => category.count > 0
+          (category: { count: number; parent: number; id: number }) =>
+            category.count > 0 && category.parent !== 0
         );
+
         setCategories(filteredCategories);
       } catch (err) {
-        setError(err);
+        setError(err as any);
       } finally {
         setLoading(false);
       }
@@ -41,7 +44,7 @@ const App = () => {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white p-4">
-        <Text>Loading...</Text>
+        <LoadingSpinner />
         <StatusBar barStyle="dark-content" backgroundColor="#16a34a" />
       </SafeAreaView>
     );
@@ -50,13 +53,19 @@ const App = () => {
   if (error) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white p-4">
-        <Text>Error: {error.message}</Text>
+        <Text className="text-red-500 text-lg font-bold text-center mb-4 w-full">
+          Error: {error?.message}
+        </Text>
         <StatusBar barStyle="dark-content" backgroundColor="#16a34a" />
       </SafeAreaView>
     );
   }
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({
+    item,
+  }: {
+    item: { id: number; name: string; count: number };
+  }) => (
     <TouchableOpacity
       className="flex truncate rounded-md border border-gray-200 bg-white p-4 mb-2"
       onPress={() => {}}

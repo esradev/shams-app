@@ -1,22 +1,35 @@
 import React, { useEffect, useState } from "react";
-import {
-  Text,
-  StatusBar,
-  ScrollView,
-  View,
-  TouchableOpacity,
-} from "react-native";
+import { Text, StatusBar, ScrollView, View } from "react-native";
 import { Link } from "expo-router";
 import { useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import Pagination from "../../components/Pagination";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import PostCardLoading from "@/components/PostCardLoading";
+
+interface ErrorType {
+  message: string;
+}
+
+interface CategoryType {
+  name: string;
+  description: string;
+}
+
+interface PostType {
+  id: number;
+  title: { rendered: string };
+  meta: { "date-of-the-lesson"?: string };
+}
+
 const CategoryPosts = () => {
   const { id } = useLocalSearchParams();
-  const [category, setCategory] = useState(null);
+  const [category, setCategory] = useState<CategoryType | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [posts, setPosts] = useState([]);
+  const [error, setError] = useState<ErrorType | null>(null);
+  const [posts, setPosts] = useState<PostType[]>([]);
   const [page, setPage] = useState(1); // Current page
   const [totalPages, setTotalPages] = useState(1); // Total number of pages
   const [isFetching, setIsFetching] = useState(false);
@@ -30,7 +43,7 @@ const CategoryPosts = () => {
         );
         setCategory(response.data);
       } catch (err) {
-        setError(err);
+        setError(err as any);
       } finally {
         setLoading(false);
       }
@@ -44,12 +57,12 @@ const CategoryPosts = () => {
     setIsFetching(true);
     try {
       const response = await axios.get(
-        `https://shams-almaarif.com/wp-json/wp/v2/posts?categories=${id}&page=${page}&per_page=10&orderby=date&order=asc`
+        `https://shams-almaarif.com/wp-json/wp/v2/posts?categories=${id}&page=${page}&per_page=20&orderby=date&order=asc`
       );
       setPosts(response.data);
       setTotalPages(Number(response.headers["x-wp-totalpages"])); // Capture total pages
     } catch (err) {
-      setError(err);
+      setError(err as any);
     } finally {
       setIsFetching(false);
     }
@@ -62,7 +75,7 @@ const CategoryPosts = () => {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <Text>Loading...</Text>
+        <LoadingSpinner />
         <StatusBar barStyle="dark-content" backgroundColor="#16a34a" />
       </SafeAreaView>
     );
@@ -71,37 +84,13 @@ const CategoryPosts = () => {
   if (error) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
-        <Text>Error: {error.message}</Text>
+        <Text className="text-red-500 text-lg font-bold text-center mb-4 w-full">
+          Error: {error?.message}
+        </Text>
         <StatusBar barStyle="dark-content" backgroundColor="#16a34a" />
       </SafeAreaView>
     );
   }
-
-  // Render pagination links
-  const renderPaginationLinks = () => {
-    const links = [];
-    for (let i = 1; i <= totalPages; i++) {
-      links.push(
-        <TouchableOpacity
-          key={i}
-          className={`rounded-sm ${
-            page === i ? "bg-green-500" : "bg-gray-200"
-          } p-2 mx-2 mb-6`}
-          onPress={() => setPage(i)} // Set page when link is clicked
-        >
-          <Text
-            className={`text-lg font-bold text-center ${
-              page === i ? "text-white" : "text-black"
-            }`}
-            style={{ color: page === i ? "#fff" : "#000" }}
-          >
-            {i}
-          </Text>
-        </TouchableOpacity>
-      );
-    }
-    return <View className="flex flex-row justify-center mt-4">{links}</View>;
-  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -111,8 +100,7 @@ const CategoryPosts = () => {
           <Text className="text-lg">{category?.description}</Text>
 
           {isFetching ? (
-            // Show skeletons when posts are loading
-            <Text>Loading...</Text>
+            <PostCardLoading count={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />
           ) : (
             <View className="flex gap-4 flex-col my-4">
               {posts.map((post) => (
@@ -133,7 +121,7 @@ const CategoryPosts = () => {
                 </View>
               ))}
 
-              {renderPaginationLinks()}
+              {Pagination({ page, setPage, totalPages })}
             </View>
           )}
         </View>
