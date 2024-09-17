@@ -5,7 +5,7 @@ import {
   StatusBar,
   ScrollView,
   TouchableOpacity,
-  Button,
+  Alert,
 } from "react-native";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
@@ -15,6 +15,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { Audio } from "expo-av";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Slider from "@react-native-community/slider";
+import * as FileSystem from "expo-file-system";
 
 interface ErrorType {
   message: string;
@@ -36,6 +37,7 @@ const PostDetail = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1); // Default volume is 1 (100%)
+  const [fileUri, setFileUri] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -56,7 +58,21 @@ const PostDetail = () => {
 
   useEffect(() => {
     const loadSound = async () => {
-      if (post?.meta["the-audio-of-the-lesson"]) {
+      if (fileUri) {
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: fileUri },
+          { shouldPlay: false }
+        );
+        setSound(sound);
+
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded) {
+            setCurrentTime(status.positionMillis);
+            setDuration(status.durationMillis || 0);
+            setIsPlaying(status.isPlaying);
+          }
+        });
+      } else if (post?.meta["the-audio-of-the-lesson"]) {
         const { sound } = await Audio.Sound.createAsync(
           { uri: post.meta["the-audio-of-the-lesson"] },
           { shouldPlay: false }
@@ -80,26 +96,63 @@ const PostDetail = () => {
         sound.unloadAsync();
       }
     };
-  }, [post]);
+  }, [post, fileUri]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (sound && isPlaying) {
-      interval = setInterval(async () => {
-        const status = await sound.getStatusAsync();
-        if (status.isLoaded) {
-          setCurrentTime(status.positionMillis);
-        }
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
+    const checkFileExists = async () => {
+      const directoryUri = FileSystem.documentDirectory + "shams_app/";
+      const fileUri = directoryUri + `${id}.mp3`;
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (fileInfo.exists) {
+        setFileUri(fileUri);
       }
     };
-  }, [sound, isPlaying]);
+
+    checkFileExists();
+  }, [id]);
+
+  const handleDownload = async () => {
+    if (post?.meta["the-audio-of-the-lesson"]) {
+      const uri = post.meta["the-audio-of-the-lesson"];
+      const directoryUri = FileSystem.documentDirectory + "shams_app/";
+      const fileUri = directoryUri + `${id}.mp3`;
+
+      try {
+        // Ensure the directory exists
+        const dirInfo = await FileSystem.getInfoAsync(directoryUri);
+        if (!dirInfo.exists) {
+          await FileSystem.makeDirectoryAsync(directoryUri, {
+            intermediates: true,
+          });
+        }
+
+        // Download the file
+        const { uri: downloadedUri } = await FileSystem.downloadAsync(
+          uri,
+          fileUri
+        );
+        console.log(`File downloaded to: ${downloadedUri}`);
+
+        // Verify the file exists
+        const fileInfo = await FileSystem.getInfoAsync(downloadedUri);
+        if (fileInfo.exists) {
+          setFileUri(downloadedUri);
+          Alert.alert(
+            "Download complete",
+            `File downloaded to ${downloadedUri}`
+          );
+        } else {
+          Alert.alert("Download failed", "File does not exist after download.");
+        }
+      } catch (error) {
+        console.error("Download error:", error);
+        Alert.alert(
+          "Download failed",
+          "An error occurred while downloading the file."
+        );
+      }
+    }
+  };
 
   const handlePlayPause = async () => {
     if (sound) {
@@ -127,14 +180,14 @@ const PostDetail = () => {
 
   const handleForward = async () => {
     if (sound) {
-      const newPosition = currentTime + 30000; // Forward 15 seconds
+      const newPosition = currentTime + 30000; // Forward 30 seconds
       await sound.setPositionAsync(newPosition);
     }
   };
 
   const handleBackward = async () => {
     if (sound) {
-      const newPosition = currentTime - 30000; // Backward 15 seconds
+      const newPosition = currentTime - 30000; // Backward 30 seconds
       await sound.setPositionAsync(newPosition);
     }
   };
@@ -193,11 +246,9 @@ const PostDetail = () => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
-      <ScrollView style={{ padding: 16 }}>
-        <Text style={{ fontSize: 24, fontWeight: "bold" }}>
-          {post?.title.rendered}
-        </Text>
+    <SafeAreaView className="flex-1 bg-white">
+      <ScrollView className="p-4">
+        <Text className="text-2xl font-bold">{post?.title.rendered}</Text>
         <RenderHTML
           contentWidth={400} // Adjust contentWidth based on your layout
           source={{
@@ -221,13 +272,13 @@ const PostDetail = () => {
               {isPlaying ? (
                 <MaterialIcons
                   name="pause-circle-outline"
-                  size={36}
+                  size={30}
                   color="black"
                 />
               ) : (
                 <MaterialIcons
                   name="play-circle-outline"
-                  size={36}
+                  size={30}
                   color="black"
                 />
               )}
@@ -235,6 +286,9 @@ const PostDetail = () => {
 
             <TouchableOpacity onPress={handleForward}>
               <MaterialIcons name="forward-30" size={30} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDownload}>
+              <MaterialIcons name="downloading" size={30} color="black" />
             </TouchableOpacity>
           </View>
 
