@@ -36,7 +36,6 @@ const PostDetail = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1); // Default volume is 1 (100%)
   const [fileUri, setFileUri] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,7 +68,6 @@ const PostDetail = () => {
           if (status.isLoaded) {
             setCurrentTime(status.positionMillis);
             setDuration(status.durationMillis || 0);
-            setIsPlaying(status.isPlaying);
           }
         });
       } else if (post?.meta["the-audio-of-the-lesson"]) {
@@ -83,7 +81,6 @@ const PostDetail = () => {
           if (status.isLoaded) {
             setCurrentTime(status.positionMillis);
             setDuration(status.durationMillis || 0);
-            setIsPlaying(status.isPlaying);
           }
         });
       }
@@ -171,13 +168,6 @@ const PostDetail = () => {
     }
   };
 
-  const handleVolumeChange = async (value: number) => {
-    if (sound) {
-      await sound.setVolumeAsync(value);
-      setVolume(value);
-    }
-  };
-
   const handleForward = async () => {
     if (sound) {
       const newPosition = currentTime + 30000; // Forward 30 seconds
@@ -256,7 +246,11 @@ const PostDetail = () => {
               post?.content.rendered ||
               `<h2>متأسفانه هنوز متن این جلسه کامل نشده است.</h2>`,
           }}
-          baseStyle={{ fontSize: 16, lineHeight: 24, color: "#333" }}
+          baseStyle={{
+            fontSize: 18,
+            lineHeight: 26,
+            color: "#333",
+          }}
         />
         <StatusBar barStyle="dark-content" backgroundColor="#16a34a" />
       </ScrollView>
