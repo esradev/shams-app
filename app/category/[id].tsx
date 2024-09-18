@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Text, StatusBar, ScrollView, View } from "react-native";
-import { Link } from "expo-router";
-import { useLocalSearchParams } from "expo-router";
+import { Href, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import Pagination from "../../components/Pagination";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PostCardLoading from "@/components/PostCardLoading";
+import PostCard from "@/components/PostCard";
 
 interface ErrorType {
   message: string;
@@ -102,23 +102,14 @@ const CategoryPosts = () => {
           {isFetching ? (
             <PostCardLoading count={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />
           ) : (
-            <View className="flex gap-4 flex-col my-4">
+            <View className="flex flex-col my-4">
               {posts.map((post) => (
-                <View
+                <PostCard
                   key={post.id}
-                  className="flex truncate rounded-md border border-gray-200 bg-white p-4"
-                >
-                  <Link href={`/posts/${post.id}`}>
-                    <Text className="flex font-bold text-xl text-gray-900 hover:text-gray-600">
-                      {post.title.rendered}
-                    </Text>
-                  </Link>
-                  {post?.meta["date-of-the-lesson"] && (
-                    <Text className="text-sm text-gray-500">
-                      {post?.meta["date-of-the-lesson"]}
-                    </Text>
-                  )}
-                </View>
+                  href={`/posts/${post.id}` as Href<string | { id: number }>}
+                  title={post.title.rendered}
+                  desc={`تاریخ بحث: ${post?.meta["date-of-the-lesson"]}`}
+                />
               ))}
 
               {Pagination({ page, setPage, totalPages })}

@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from "react";
-import {
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StatusBar,
-  View,
-} from "react-native";
+import { Text, FlatList, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link } from "expo-router";
 
 import axios from "axios";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PostCard from "@/components/PostCard";
+import { Href } from "expo-router";
 
 const App = () => {
   const [categories, setCategories] = useState([]);
@@ -66,24 +61,16 @@ const App = () => {
   }: {
     item: { id: number; name: string; count: number };
   }) => (
-    <TouchableOpacity
-      className="flex truncate rounded-md border border-gray-200 bg-white p-4 mb-2"
-      onPress={() => {}}
-    >
-      <Link
-        href={`/category/${item.id}`}
-        className="flex flex-col justify-between items-center content-center align-middle"
-      >
-        <Text className="flex font-bold text-xl text-gray-900 hover:text-gray-600">
-          {item.name}{" "}
-        </Text>
-        <Text className="text-sm text-gray-500">{item.count} جلسه </Text>
-      </Link>
-    </TouchableOpacity>
+    <PostCard
+      key={item.id}
+      href={`/category/${item.id}` as Href<string | { id: number }>}
+      title={`${item.name} `}
+      desc={`${item.count} جلسه `}
+    />
   );
 
   return (
-    <SafeAreaView className="flex-1 ibg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <View className="p-4 mb-12">
         <Text className="text-lg font-bold mb-4 text-center">
           دروس استاد آیت الله سید محمد رضا حسینی آملی (حفظه الله)
