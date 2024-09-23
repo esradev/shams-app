@@ -71,10 +71,7 @@ const App = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="p-4 mb-12">
-        <Text className="text-lg font-bold mb-4 text-center">
-          دروس استاد آیت الله سید محمد رضا حسینی آملی (حفظه الله)
-        </Text>
+      <View className="p-4">
         <FlatList
           data={categories}
           renderItem={renderItem}

@@ -8,11 +8,11 @@ import {
   Alert,
 } from "react-native";
 import axios from "axios";
-import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RenderHTML from "react-native-render-html";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Audio } from "expo-av";
+import { Href, useLocalSearchParams, useNavigation } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Slider from "@react-native-community/slider";
 import * as FileSystem from "expo-file-system";
@@ -29,6 +29,7 @@ interface PostType {
 
 const PostDetail = () => {
   const { id } = useLocalSearchParams();
+  const navigation = useNavigation();
   const [post, setPost] = useState<PostType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ErrorType | null>(null);
@@ -45,6 +46,7 @@ const PostDetail = () => {
           `https://shams-almaarif.com/wp-json/wp/v2/posts/${id}`
         );
         setPost(response.data);
+        navigation.setOptions({ title: response.data?.title?.rendered });
       } catch (err) {
         setError(err as any);
       } finally {
@@ -238,7 +240,6 @@ const PostDetail = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="p-4">
-        <Text className="text-2xl font-bold">{post?.title.rendered}</Text>
         <RenderHTML
           contentWidth={400} // Adjust contentWidth based on your layout
           source={{
@@ -252,7 +253,6 @@ const PostDetail = () => {
             color: "#333",
           }}
         />
-        <StatusBar barStyle="dark-content" backgroundColor="#16a34a" />
       </ScrollView>
 
       {post?.meta["the-audio-of-the-lesson"] && (
@@ -302,6 +302,7 @@ const PostDetail = () => {
           </View>
         </View>
       )}
+      <StatusBar barStyle="dark-content" backgroundColor="#16a34a" />
     </SafeAreaView>
   );
 };

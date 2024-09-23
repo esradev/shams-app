@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Text, StatusBar, ScrollView, View } from "react-native";
-import { Href, useLocalSearchParams } from "expo-router";
+import { Href, useLocalSearchParams, useNavigation } from "expo-router";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -26,6 +26,7 @@ interface PostType {
 
 const CategoryPosts = () => {
   const { id } = useLocalSearchParams();
+  const navigation = useNavigation();
   const [category, setCategory] = useState<CategoryType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ErrorType | null>(null);
@@ -42,6 +43,7 @@ const CategoryPosts = () => {
           `https://shams-almaarif.com/wp-json/wp/v2/categories/${id}`
         );
         setCategory(response.data);
+        navigation.setOptions({ title: response.data.name });
       } catch (err) {
         setError(err as any);
       } finally {
@@ -96,13 +98,10 @@ const CategoryPosts = () => {
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="p-4">
         <View>
-          <Text className="text-2xl font-bold">{category?.name}</Text>
-          <Text className="text-lg">{category?.description}</Text>
-
           {isFetching ? (
             <PostCardLoading count={[1, 2, 3, 4, 5, 6, 7, 8, 9]} />
           ) : (
-            <View className="flex flex-col my-4">
+            <View className="flex flex-col">
               {posts.map((post) => (
                 <PostCard
                   key={post.id}

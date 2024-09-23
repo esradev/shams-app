@@ -6,10 +6,11 @@ import {
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { StatusBar } from "react-native";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -32,10 +33,39 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="category/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="posts/[id]" options={{ headerShown: false }} />
+      <Stack
+        screenOptions={{
+          headerShown: true,
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
+          },
+          headerTintColor: colorScheme === "dark" ? "#fff" : "#000",
+          headerSearchBarOptions: {
+            placeholder: "Search",
+            autoFocus: false,
+            autoCapitalize: "sentences",
+          },
+        }}
+      >
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            title: "شمس المعارف",
+          }}
+        />
+        <Stack.Screen
+          name="category/[id]"
+          options={({ route }) => ({
+            title: route.params?.categoryName || ".....",
+          })}
+        />
+        <Stack.Screen
+          name="posts/[id]"
+          options={({ route }) => ({
+            title: route.params?.postTitle || ".....",
+          })}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>
